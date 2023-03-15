@@ -15,14 +15,15 @@ public class Producer implements Runnable {
     private final int numberObjects;
     private final String nameQueue;
     private final Broker broker;
-    private static final String POISON_PILL = "End sending messages";
+    private final String poisonPill;
     JsonConverter converter = new JsonConverter();
 
-    public Producer(long time, String nameQueue, Broker broker, int numberObjects) {
+    public Producer(long time, String nameQueue, Broker broker, int numberObjects,String poisonPill) {
         this.time = time;
         this.nameQueue = nameQueue;
         this.broker = broker;
         this.numberObjects = numberObjects;
+        this.poisonPill=poisonPill;
     }
 
     public static void main(String[] args) {
@@ -44,12 +45,12 @@ public class Producer implements Runnable {
         while ( watch.getTime(TimeUnit.SECONDS)<time&&counter < numberObjects) {
             Person person = getPerson(supplier);
             String json = converter.createJsonFromObjects(person);
-            String sendMessage = System.currentTimeMillis() >= timeStopSendingMessage ? POISON_PILL : json;
+            String sendMessage = System.currentTimeMillis() >= timeStopSendingMessage ? poisonPill : json;
 
             sendMessage(sendMessage);
             counter++;
         }
-        sendMessage(POISON_PILL);
+        sendMessage(poisonPill);
         broker.stopPooledConnectionFactory();
     }
 
