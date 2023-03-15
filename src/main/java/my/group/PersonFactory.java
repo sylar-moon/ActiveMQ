@@ -7,11 +7,12 @@ import java.util.stream.Stream;
 public class PersonFactory {
     private final Random random = new Random();
     public Stream<Person> createStreamRandomPerson(){
-        return Stream.generate(()->new Person(getRandomString(),random.nextInt(100),getRandomDate()));
+        return Stream.generate(()->new Person(getRandomString(),random.nextInt(50),getRandomDate()));
     }
-    public Person createRandomPerson(){
-        return new Person(getRandomString(),random.nextInt(100),getRandomDate());
-    }
+
+//    public Person createRandomPerson(){
+//        return new Person(getRandomString(),random.nextInt(50),getRandomDate());
+//    }
 
     public String getRandomString(){
         int length = random.nextInt(19)+1;

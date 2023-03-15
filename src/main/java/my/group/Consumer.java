@@ -13,7 +13,7 @@ public class Consumer implements Runnable {
     private final String nameQueue;
     private final Broker broker;
     private final String poisonPill;
-    MyValidator validator = new MyValidator();
+    private final MyValidator validator = new MyValidator();
     private final String invalidPersonsCsv;
     private final String validPersonsCsv;
     private final JsonConverter converter = new JsonConverter();
@@ -28,6 +28,8 @@ public class Consumer implements Runnable {
 
     @Override
     public void run() {
+        validator.validateCsvFormat(invalidPersonsCsv);
+        validator.validateCsvFormat(validPersonsCsv);
         try (CSVWriter invalidWriter = new CSVWriter(new FileWriter(invalidPersonsCsv));
              CSVWriter validWriter = new CSVWriter(new FileWriter(validPersonsCsv))) {
 

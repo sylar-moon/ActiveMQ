@@ -39,14 +39,13 @@ public class Producer implements Runnable {
         int counter = 0;
         StopWatch watch = StopWatch.createStarted();
 
-        long timeStopSendingMessage = System.currentTimeMillis() + (time * 1000);//stopwath
+        long timeStopSendingMessage = System.currentTimeMillis() + (time * 1000);
         Supplier<Stream<Person>> supplier = () -> new PersonFactory().createStreamRandomPerson();
 
         while ( watch.getTime(TimeUnit.SECONDS)<time&&counter < numberObjects) {
             Person person = getPerson(supplier);
             String json = converter.createJsonFromObjects(person);
             String sendMessage = System.currentTimeMillis() >= timeStopSendingMessage ? poisonPill : json;
-
             sendMessage(sendMessage);
             counter++;
         }

@@ -6,6 +6,7 @@ import javax.validation.ConstraintViolation;
 import javax.validation.Validation;
 import javax.validation.Validator;
 import javax.validation.ValidatorFactory;
+import java.util.Locale;
 import java.util.Set;
 
 public class MyValidator {
@@ -19,7 +20,7 @@ public class MyValidator {
         if (!violation.isEmpty()) {
             int count = 0;
             result = new String[violation.size()];
-            LOGGER.error("This Person is invalid:{}", person.getName());
+            LOGGER.info("This Person is invalid:{}", person.getName());
             for (ConstraintViolation<Person> viol : violation) {
 
                 result[count] = viol.getMessage();
@@ -30,5 +31,19 @@ public class MyValidator {
             LOGGER.info("This Person is VALID! :{}", person.getName());
         }
         return result;
+    }
+
+    public void validateCsvFormat(String format){
+        try {
+        if(!isValidCsv(format)){
+            throw new FileFormatException("Incorrect file format, File format must be csv") ;
+        }
+        }catch (FileFormatException e){
+            LOGGER.error(e.getMessage(),e);
+        }
+    }
+
+    public boolean isValidCsv(String format){
+        return format.toLowerCase(Locale.ROOT).substring(format.lastIndexOf(".")).equals(".csv");
     }
 }
