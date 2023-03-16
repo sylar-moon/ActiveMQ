@@ -4,25 +4,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class MyLogger {
-    private String pathLogger = "logback.xml";
-
-    MyLogger(String pathLogger) {
-        this.pathLogger = pathLogger;
-    }
-
-    MyLogger() {
-    }
-
-    public String getPathLogger() {
-        return pathLogger;
-    }
-
-    public void setPathLogger(String pathLogger) {
-        this.pathLogger = pathLogger;
-    }
+    private static final String PATH_LOGGER = "logback.xml";
 
     public Logger getLogger() {
-        System.setProperty("logback.configurationFile", pathLogger);
+        System.setProperty("logback.configurationFile", PATH_LOGGER);
         return LoggerFactory.getLogger(App.class);
     }
 }

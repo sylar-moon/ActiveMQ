@@ -11,13 +11,13 @@ public class JsonConverter {
     private static final Logger LOGGER = new MyLogger().getLogger();
     private final ObjectMapper mapper = new ObjectMapper();
 
-    public String createJsonFromObjects(Person person) {
+    public String createJsonFromObjects(Object obj) {
         mapper.registerModule(new JavaTimeModule());
         mapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
         try {
-            return (mapper.writeValueAsString(person));
+            return (mapper.writeValueAsString(obj));
         } catch (JsonProcessingException e) {
-            LOGGER.error("Invalid POJO object: {} ", person, e);
+            LOGGER.error("Invalid POJO object: {} ", obj, e);
             System.exit(0);
         }
         return null;

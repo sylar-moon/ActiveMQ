@@ -78,15 +78,20 @@ public class Broker {
             final TextMessage consumerTextMessage = (TextMessage) consumerMessage;
             message = consumerTextMessage.getText();
             LOGGER.info("Message received: {}", consumerTextMessage.getText());
-
+            return message;
             // Clean up the consumer.
 
-        } finally {
+        } catch (NullPointerException e){
+            LOGGER.error("Queue is empty",e);
+        }
+
+        finally {
             consumer.close();
             consumerSession.close();
             consumerConnection.close();
         }
-        return message;
+
+        return "";
     }
 
     PooledConnectionFactory

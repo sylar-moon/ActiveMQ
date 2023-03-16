@@ -38,15 +38,11 @@ public class Producer implements Runnable {
     public void run() {
         int counter = 0;
         StopWatch watch = StopWatch.createStarted();
-
-        long timeStopSendingMessage = System.currentTimeMillis() + (time * 1000);
         Supplier<Stream<Person>> supplier = () -> new PersonFactory().createStreamRandomPerson();
-
         while ( watch.getTime(TimeUnit.SECONDS)<time&&counter < numberObjects) {
             Person person = getPerson(supplier);
             String json = converter.createJsonFromObjects(person);
-            String sendMessage = System.currentTimeMillis() >= timeStopSendingMessage ? poisonPill : json;
-            sendMessage(sendMessage);
+            sendMessage(json);
             counter++;
         }
         sendMessage(poisonPill);
@@ -63,9 +59,8 @@ public class Producer implements Runnable {
         try {
             broker.sendMessage(nameQueue, message);
         } catch (JMSException e) {
-            LOGGER.error(e.getMessage(), e);
+            LOGGER.error("Unable to send message: {}",message, e);
         }
     }
-
 
 }

@@ -10,10 +10,6 @@ public class PersonFactory {
         return Stream.generate(()->new Person(getRandomString(),random.nextInt(50),getRandomDate()));
     }
 
-//    public Person createRandomPerson(){
-//        return new Person(getRandomString(),random.nextInt(50),getRandomDate());
-//    }
-
     public String getRandomString(){
         int length = random.nextInt(19)+1;
         String charset = "abcdefghijklmnoprstuvwxyz";

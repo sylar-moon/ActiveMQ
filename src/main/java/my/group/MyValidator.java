@@ -13,6 +13,7 @@ public class MyValidator {
     private static final Logger LOGGER = new MyLogger().getLogger();
     public static final ValidatorFactory FACTORY = Validation.buildDefaultValidatorFactory();
     public static final Validator VALIDATOR = FACTORY.getValidator();
+    public static final JsonConverter CONVERTER = new JsonConverter();
 
     public String[] validatePerson(Person person) { //visualwm
         Set<ConstraintViolation<Person>> violation = VALIDATOR.validate(person);
@@ -22,7 +23,7 @@ public class MyValidator {
             result = new String[violation.size()];
             LOGGER.info("This Person is invalid:{}", person.getName());
             for (ConstraintViolation<Person> viol : violation) {
-
+//                LOGGER.info(CONVERTER.createJsonFromObjects(viol));
                 result[count] = viol.getMessage();
                 count++;
             }

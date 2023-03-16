@@ -2,8 +2,6 @@ package my.group;
 
 import org.junit.jupiter.api.Test;
 
-import javax.annotation.Nonnull;
-import java.util.List;
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.*;

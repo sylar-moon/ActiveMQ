@@ -13,7 +13,13 @@ Broker broker = new Broker(endPoint,"sylar_moon","myPass911##qW");
 @Test
     void testSendReceiveMessage() throws JMSException {
     broker.sendMessage("NewQueue","myMessage");
-    String receiveMessage = broker.receiveMessage("NewQueue");
-    assertEquals("myMessage",receiveMessage);
+    String receiveMessage1 = broker.receiveMessage("NewQueue");
+    assertEquals("myMessage",receiveMessage1);
+
+    String receiveMessage2 = broker.receiveMessage("MyQueue");
+    assertEquals("",receiveMessage2);
+
+
+
 }
 }

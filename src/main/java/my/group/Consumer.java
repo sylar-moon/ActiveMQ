@@ -43,7 +43,8 @@ public class Consumer implements Runnable {
                 if (errors.length == 0) {
                     validWriter.writeNext(new String[]{person.getName(), String.valueOf(person.getCount())});
                 } else {
-                    invalidWriter.writeNext(new String[]{person.getName(), String.valueOf(person.getCount()), "errors: ", Arrays.toString(errors)});
+                    String error =  converter.createJsonFromObjects(new Errors(Arrays.toString(errors)));
+                    invalidWriter.writeNext(new String[]{person.getName(), String.valueOf(person.getCount()), error });
                 }
             }
 

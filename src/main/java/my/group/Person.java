@@ -1,6 +1,5 @@
 package my.group;
 
-import org.checkerframework.checker.nullness.qual.NonNull;
 import org.hibernate.validator.constraints.Length;
 
 import javax.annotation.Nonnull;
@@ -20,8 +19,7 @@ public class Person {
         this.createdAt = createdAt;
     }
 
-
-
+    @Nonnull
     @Length(min = 7,message = "Yor name length must be more 6")
     @CheckA(message = "Your name is not valid, name must contain at least one letter a")
     public String getName() {
