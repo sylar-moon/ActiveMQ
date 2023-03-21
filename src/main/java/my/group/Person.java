@@ -4,6 +4,7 @@ import org.hibernate.validator.constraints.Length;
 
 import javax.annotation.Nonnull;
 import javax.validation.constraints.Min;
+import javax.validation.constraints.Pattern;
 import java.time.LocalDateTime;
 import java.util.Objects;
 

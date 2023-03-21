@@ -8,21 +8,11 @@ import org.slf4j.Logger;
 import javax.jms.*;
 
 public class Broker {
-    private final PooledConnectionFactory pooledConnectionFactory;
-    private final ActiveMQConnectionFactory mqConnectionFactory;
     private static final Logger LOGGER = new MyLogger().getLogger();
-
-    public Broker(String endpoint, String username, String password) {
-        this.mqConnectionFactory = createActiveMQConnectionFactory(endpoint, username, password);
-        this.pooledConnectionFactory = createPooledConnectionFactory(mqConnectionFactory);
-    }
+    RPS rps = new RPS();
 
     void
-    sendMessage(String nameQueue, String message) throws JMSException {
-        // Establish a connection for the producer.
-        final Connection producerConnection = pooledConnectionFactory
-                .createConnection();
-        producerConnection.start();
+    sendMessage(String nameQueue, String message, Connection producerConnection) throws JMSException {
 
         // Create a session.
         final Session producerSession = producerConnection
@@ -47,51 +37,53 @@ public class Broker {
         // Clean up the producer.
         producer.close();
         producerSession.close();
-        producerConnection.close();
     }
 
 
     String
-    receiveMessage(String nameQueue) throws JMSException { // Establish a connection for the consumer.
-        // Note: Consumers should not use PooledConnectionFactory.
-        final Connection consumerConnection = mqConnectionFactory.createConnection();
-        consumerConnection.start();
-
+    receiveMessage(String nameQueue, Connection consumerConnection) throws JMSException { // Establish a connection for the consumer.
+        rps.startWatch();
         // Create a session.
         final Session consumerSession = consumerConnection
                 .createSession(false, Session.AUTO_ACKNOWLEDGE);
-
+        System.out.println(rps.getTimeMillisecond());
         // Create a queue named "MyQueue".
         final Destination consumerDestination = consumerSession
                 .createQueue(nameQueue);
+        System.out.println(rps.getTimeMillisecond());
 
         // Create a message consumer from the session to the queue.
         final MessageConsumer consumer = consumerSession
                 .createConsumer(consumerDestination);
         String message;
+        System.out.println(rps.getTimeMillisecond());
 
         try {
             // Begin to wait for messages.
             final Message consumerMessage = consumer.receive(1000);
+            System.out.println(rps.getTimeMillisecond());
 
             // Receive the message when it arrives.
             final TextMessage consumerTextMessage = (TextMessage) consumerMessage;
             message = consumerTextMessage.getText();
             LOGGER.info("Message received: {}", consumerTextMessage.getText());
+            System.out.println(rps.getTimeMillisecond());
+
             return message;
             // Clean up the consumer.
 
         } catch (NullPointerException e){
             LOGGER.error("Queue is empty",e);
+            System.exit(4);
         }
 
         finally {
             consumer.close();
             consumerSession.close();
-            consumerConnection.close();
+            rps.stopWatch();
         }
 
-        return "";
+        return null;
     }
 
     PooledConnectionFactory
@@ -104,19 +96,15 @@ public class Broker {
         return factory;
     }
 
-    ActiveMQConnectionFactory createActiveMQConnectionFactory(String endpoint, String username, String password) {
+    ActiveMQConnectionFactory createActiveMQConnectionFactory(DataToConnectActiveMQ connectActiveMQ) {
         // Create a connection factory.
         final ActiveMQConnectionFactory connectionFactory =
-                new ActiveMQConnectionFactory(endpoint);
+                new ActiveMQConnectionFactory(connectActiveMQ.getEndPoint());
 
         // Pass the sign-in credentials.
-        connectionFactory.setUserName(username);
-        connectionFactory.setPassword(password);
+        connectionFactory.setUserName(connectActiveMQ.getUsername());
+        connectionFactory.setPassword(connectActiveMQ.getPassword());
         return connectionFactory;
-    }
-
-    public void stopPooledConnectionFactory() {
-        pooledConnectionFactory.stop();
     }
 
 }

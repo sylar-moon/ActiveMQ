@@ -29,14 +29,14 @@ public class App {
         String endPoint = PROPERTIES.getProperty("sslActiveMQ");
         String userName = PROPERTIES.getProperty("username");
         String password = PROPERTIES.getProperty("password");
+        DataToConnectActiveMQ dataToConnect = new DataToConnectActiveMQ(endPoint,userName,password);
         String nameQueue = PROPERTIES.getProperty("nameQueue");
         //If arguments are not set then use DEFAULT_TIME
         long messageSendingTime = args.length==0?DEFAULT_TIME:Long.parseLong(args[0]);
         int numberObjects = Integer.parseInt(PROPERTIES.getProperty("numberObjects"));
-        Broker broker = new Broker(endPoint, userName, password);
-        Thread producer = new Thread(new Producer(messageSendingTime, nameQueue, broker, numberObjects,POISON_PILL));
-        producer.start();
-        Thread consumer = new Thread(new Consumer(nameQueue, broker,POISON_PILL,PATH_VALID_PERSONS_CSV,PATH_INVALID_PERSONS_CSV));
+//        Thread producer = new Thread(new Producer(messageSendingTime, nameQueue, dataToConnect, numberObjects,POISON_PILL));
+//        producer.start();
+        Thread consumer = new Thread(new Consumer(nameQueue, dataToConnect,POISON_PILL,PATH_VALID_PERSONS_CSV,PATH_INVALID_PERSONS_CSV));
         consumer.start();
     }
 

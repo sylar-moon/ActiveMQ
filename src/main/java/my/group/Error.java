@@ -1,8 +1,11 @@
 package my.group;
 
-public class Errors {
+/**
+ * Class for creating errors in json format
+ **/
+public class Error {
     private final String errors;
-    Errors(String errors){
+    Error(String errors){
         this.errors=errors;
     }
 
