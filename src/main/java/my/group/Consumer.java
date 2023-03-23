@@ -1,7 +1,6 @@
 package my.group;
 
 import com.opencsv.CSVWriter;
-import org.apache.activemq.ActiveMQConnectionFactory;
 import org.slf4j.Logger;
 
 import javax.jms.Connection;
@@ -46,14 +45,14 @@ public class Consumer implements Runnable {
                     break;
                 }
                 rps.incrementCount();
-//                Person person = converter.createPersonFromJson(message);
-//                String[] errors = validator.validatePerson(person);
-//                if (errors.length == 0) {
-//                    validWriter.writeNext(new String[]{person.getName(), String.valueOf(person.getCount())});
-//                } else {
-//                    String error = converter.createJsonFromObjects(new Error(Arrays.toString(errors)));
-//                    invalidWriter.writeNext(new String[]{person.getName(), String.valueOf(person.getCount()), error});
-//                }
+                Person person = converter.createPersonFromJson(message);
+                String[] errors = validator.validatePerson(person);
+                if (errors.length == 0) {
+                    validWriter.writeNext(new String[]{person.getName(), String.valueOf(person.getCount())});
+                } else {
+                    String error = converter.createJsonFromObjects(new Error(Arrays.toString(errors)));
+                    invalidWriter.writeNext(new String[]{person.getName(), String.valueOf(person.getCount()), error});
+                }
             }
 
         } catch (IOException e) {

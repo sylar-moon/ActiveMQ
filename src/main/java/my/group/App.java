@@ -34,8 +34,8 @@ public class App {
         //If arguments are not set then use DEFAULT_TIME
         long messageSendingTime = args.length==0?DEFAULT_TIME:Long.parseLong(args[0]);
         int numberObjects = Integer.parseInt(PROPERTIES.getProperty("numberObjects"));
-//        Thread producer = new Thread(new Producer(messageSendingTime, nameQueue, dataToConnect, numberObjects,POISON_PILL));
-//        producer.start();
+        Thread producer = new Thread(new Producer(messageSendingTime, nameQueue, dataToConnect, numberObjects,POISON_PILL));
+        producer.start();
         Thread consumer = new Thread(new Consumer(nameQueue, dataToConnect,POISON_PILL,PATH_VALID_PERSONS_CSV,PATH_INVALID_PERSONS_CSV));
         consumer.start();
     }

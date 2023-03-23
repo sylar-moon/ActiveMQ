@@ -19,6 +19,9 @@ public class RPS {
     public long getTimeSecond() {
         return watch.getTime(TimeUnit.SECONDS);
     }
+    public void resetWatch(){
+        watch.reset();
+    }
 
     public long getTimeMillisecond() {
         return watch.getTime(TimeUnit.MILLISECONDS);

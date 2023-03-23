@@ -44,33 +44,24 @@ public class Broker {
     receiveMessage(String nameQueue, Connection consumerConnection) throws JMSException { // Establish a connection for the consumer.
         rps.startWatch();
         // Create a session.
-        final Session consumerSession = consumerConnection
+         Session consumerSession = consumerConnection
                 .createSession(false, Session.AUTO_ACKNOWLEDGE);
-        System.out.println(rps.getTimeMillisecond());
-        // Create a queue named "MyQueue".
-        final Destination consumerDestination = consumerSession
+
+        // Create a queue
+         Queue queue = consumerSession
                 .createQueue(nameQueue);
-        System.out.println(rps.getTimeMillisecond());
 
         // Create a message consumer from the session to the queue.
-        final MessageConsumer consumer = consumerSession
-                .createConsumer(consumerDestination);
-        String message;
-        System.out.println(rps.getTimeMillisecond());
+         MessageConsumer consumer = consumerSession
+                .createConsumer(queue);
 
         try {
             // Begin to wait for messages.
-            final Message consumerMessage = consumer.receive(1000);
-            System.out.println(rps.getTimeMillisecond());
+             Message consumerMessage = consumer.receive();
 
-            // Receive the message when it arrives.
-            final TextMessage consumerTextMessage = (TextMessage) consumerMessage;
-            message = consumerTextMessage.getText();
-            LOGGER.info("Message received: {}", consumerTextMessage.getText());
-            System.out.println(rps.getTimeMillisecond());
-
-            return message;
-            // Clean up the consumer.
+            String text = ( (TextMessage)consumerMessage).getText();
+            LOGGER.info("Message received: {}", text);
+            return text;
 
         } catch (NullPointerException e){
             LOGGER.error("Queue is empty",e);
@@ -81,6 +72,7 @@ public class Broker {
             consumer.close();
             consumerSession.close();
             rps.stopWatch();
+            rps.resetWatch();
         }
 
         return null;

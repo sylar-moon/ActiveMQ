@@ -12,12 +12,7 @@ class BrokerTest {
 
 @Test
     void testSendReceiveMessage() throws JMSException {
-//    broker.sendMessage("NewQueue","myMessage");
-//    String receiveMessage1 = broker.receiveMessage("NewQueue");
-//    assertEquals("myMessage",receiveMessage1);
-//
-//    String receiveMessage2 = broker.receiveMessage("MyQueue");
-//    assertEquals("",receiveMessage2);
+
 
 }
 }
