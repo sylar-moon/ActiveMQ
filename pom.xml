@@ -123,7 +123,7 @@
                             <manifest>
                                 <addClasspath>true</addClasspath>
                                 <classpathPrefix>lib/</classpathPrefix>
-                                <mainClass>com.myGroup.App</mainClass>
+                                <mainClass>my.group.App</mainClass>
                             </manifest>
                             <manifestEntries>
                                 <Class-Path>config.properties</Class-Path>
