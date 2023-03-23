@@ -41,34 +41,32 @@ public class Broker {
 
 
     String
-    receiveMessage(String nameQueue, Connection consumerConnection) throws JMSException { // Establish a connection for the consumer.
+    receiveMessage(String nameQueue, Connection consumerConnection) throws JMSException {
         rps.startWatch();
         // Create a session.
-         Session consumerSession = consumerConnection
+        Session consumerSession = consumerConnection
                 .createSession(false, Session.AUTO_ACKNOWLEDGE);
 
         // Create a queue
-         Queue queue = consumerSession
+        Queue queue = consumerSession
                 .createQueue(nameQueue);
 
         // Create a message consumer from the session to the queue.
-         MessageConsumer consumer = consumerSession
+        MessageConsumer consumer = consumerSession
                 .createConsumer(queue);
 
         try {
             // Begin to wait for messages.
-             Message consumerMessage = consumer.receive();
+            Message consumerMessage = consumer.receive();
 
-            String text = ( (TextMessage)consumerMessage).getText();
+            String text = ((TextMessage) consumerMessage).getText();
             LOGGER.info("Message received: {}", text);
             return text;
 
-        } catch (NullPointerException e){
-            LOGGER.error("Queue is empty",e);
+        } catch (NullPointerException e) {
+            LOGGER.error("Queue is empty", e);
             System.exit(4);
-        }
-
-        finally {
+        } finally {
             consumer.close();
             consumerSession.close();
             rps.stopWatch();

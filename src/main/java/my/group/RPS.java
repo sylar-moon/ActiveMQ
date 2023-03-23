@@ -23,10 +23,6 @@ public class RPS {
         watch.reset();
     }
 
-    public long getTimeMillisecond() {
-        return watch.getTime(TimeUnit.MILLISECONDS);
-    }
-
     public void stopWatch() {
         watch.stop();
     }
