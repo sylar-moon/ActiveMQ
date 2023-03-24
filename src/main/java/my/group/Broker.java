@@ -12,32 +12,19 @@ public class Broker {
     RPS rps = new RPS();
 
     void
-    sendMessage(String nameQueue, String message, Connection producerConnection) throws JMSException {
-
-        // Create a session.
-        final Session producerSession = producerConnection
-                .createSession(false, Session.AUTO_ACKNOWLEDGE);
-
-        // Create a queue named "MyQueue".
-        final Destination producerDestination = producerSession
-                .createQueue(nameQueue);
-
-        // Create a producer from the session to the queue.
-        final MessageProducer producer = producerSession
-                .createProducer(producerDestination);
-        producer.setDeliveryMode(DeliveryMode.NON_PERSISTENT);
-
+    sendMessage(String message,Session session, MessageProducer producer){
         // Create a message.
-        final TextMessage producerMessage = producerSession
-                .createTextMessage(message);
+        try {
+            final TextMessage producerMessage = session.createTextMessage();
 
-        // Send the message.
-        producer.send(producerMessage);
-        LOGGER.info("Message send: {}", message);
-        // Clean up the producer.
-        producer.close();
-        producerSession.close();
+            // Send the message.
+            producer.send(producerMessage);
+            LOGGER.info("Message send: {}", message);}
+        catch (JMSException e){
+            LOGGER.error("Unable to send message: {}", message, e);
+        }
     }
+
 
 
     String

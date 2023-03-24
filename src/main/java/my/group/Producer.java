@@ -4,8 +4,7 @@ import org.apache.activemq.ActiveMQConnectionFactory;
 import org.apache.activemq.pool.PooledConnectionFactory;
 import org.slf4j.Logger;
 
-import javax.jms.Connection;
-import javax.jms.JMSException;
+import javax.jms.*;
 import java.util.Optional;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
@@ -34,17 +33,65 @@ public class Producer implements Runnable {
     public void run() {
         rps.startWatch();
         Connection connection = connectToActiveMQ();
+        Session producerSession = creatSession(connection);
+        MessageProducer producer = createMessageProducer(producerSession);
         Supplier<Stream<Person>> supplier = () -> new PersonFactory().createStreamRandomPerson();
         while (rps.getTimeSecond() < time && rps.getCount() < numberObjects) {
             Person person = getPerson(supplier);
             String json = converter.createJsonFromObjects(person);
-            sendMessage(json, connection);
+            broker.sendMessage(json,producerSession, producer);
             rps.incrementCount();
         }
         rps.stopWatch();
         LOGGER.info("Producer indicators: count= {} time={} rps={}", (rps.getCount()), rps.getTimeSecond(), rps.getRPS());
-        sendMessage(poisonPill, connection);
+        broker.sendMessage(poisonPill, producerSession, producer);
         stopConnectActiveMQ(connection);
+        closeSession(producerSession);
+        closeProducer(producer);
+    }
+
+    private void closeProducer(MessageProducer producer) {
+        try {
+            producer.close();
+        } catch (JMSException e) {
+            LOGGER.error("Unable to close Message Producer",e);
+            System.exit(0);
+        }
+    }
+
+    private MessageProducer createMessageProducer(Session producerSession) {
+        try {
+            // Create a queue
+            Queue producerQueue = producerSession
+                    .createQueue(nameQueue);
+            // Create a producer from the session to the queue.
+            final MessageProducer producer = producerSession
+                    .createProducer(producerQueue);
+            producer.setDeliveryMode(DeliveryMode.NON_PERSISTENT);
+            return producer;
+        } catch (JMSException e) {
+            LOGGER.error("Unable to create Message Producer",e);
+            System.exit(0);
+        }
+        return null;
+    }
+
+    private void closeSession(Session producerSession) {
+        try {
+            producerSession.close();
+        } catch (JMSException e) {
+            LOGGER.error("Unable to close session", e);
+        }
+    }
+
+    private Session creatSession(Connection connection) {
+        try {
+            return connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
+        } catch (JMSException e) {
+            LOGGER.error("Unable to create session", e);
+            System.exit(0);
+        }
+        return null;
     }
 
     private void stopConnectActiveMQ(Connection connection) {
@@ -74,14 +121,6 @@ public class Producer implements Runnable {
         Optional<Person> optionalPerson = supplier.get().findAny();
         return optionalPerson.orElse(null);
 
-    }
-
-    private void sendMessage(String message, Connection connection) {
-        try {
-            broker.sendMessage(nameQueue, message, connection);
-        } catch (JMSException e) {
-            LOGGER.error("Unable to send message: {}", message, e);
-        }
     }
 
 }
