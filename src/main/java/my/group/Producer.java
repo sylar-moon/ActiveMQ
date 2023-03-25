@@ -1,15 +1,16 @@
 package my.group;
+
 import org.apache.activemq.ActiveMQConnectionFactory;
 import org.apache.activemq.pool.PooledConnectionFactory;
 import org.slf4j.Logger;
 
-import javax.jms.Connection;
-import javax.jms.JMSException;
+import javax.jms.*;
 import java.util.Optional;
+import java.util.concurrent.Callable;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
-public class Producer implements Runnable {
+public class Producer implements Callable<RPS> {
     private static final Logger LOGGER = new MyLogger().getLogger();
     private final long time;
     private final int numberObjects;
@@ -19,36 +20,48 @@ public class Producer implements Runnable {
     Broker broker = new Broker();
     PooledConnectionFactory pooledConnectionFactory;
     RPS rps = new RPS();
+    private final Session producerSession;
+    private final Connection connection;
+    private final MessageProducer messageProducer;
 
-    public Producer(long time, String nameQueue, DataToConnectActiveMQ data, int numberObjects, String poisonPill) {
+    public Producer(long time, String nameQueue, DataToConnectActiveMQ data, int numberObjects, String poisonPill) throws JMSException {
         this.time = time;
         this.nameQueue = nameQueue;
         this.numberObjects = numberObjects;
         this.poisonPill = poisonPill;
         ActiveMQConnectionFactory activeMQConnectionFactory = broker.createActiveMQConnectionFactory(data);
         this.pooledConnectionFactory = broker.createPooledConnectionFactory(activeMQConnectionFactory);
+        this.connection = pooledConnectionFactory.createConnection();
+        connection.start();
+        this.producerSession = connection
+                .createSession(false, Session.AUTO_ACKNOWLEDGE);
+        Destination producerDestination = producerSession
+                .createQueue(nameQueue);
+        this.messageProducer = producerSession
+                .createProducer(producerDestination);
+        messageProducer.setDeliveryMode(DeliveryMode.NON_PERSISTENT);
     }
 
     @Override
-    public void run() {
+    public RPS call() {
         rps.startWatch();
-        Connection connection = connectToActiveMQ();
         Supplier<Stream<Person>> supplier = () -> new PersonFactory().createStreamRandomPerson();
         while (rps.getTimeSecond() < time && rps.getCount() < numberObjects) {
             Person person = getPerson(supplier);
             String json = converter.createJsonFromObjects(person);
-            sendMessage(json, connection);
+            sendMessage(json);
             rps.incrementCount();
         }
         rps.stopWatch();
-        LOGGER.info("Producer indicators: count= {} time={} rps={}", (rps.getCount()), rps.getTimeSecond(), rps.getRPS());
-        sendMessage(poisonPill, connection);
+        sendMessage(poisonPill);
         stopConnectActiveMQ(connection);
+        return rps;
     }
 
     private void stopConnectActiveMQ(Connection connection) {
         try {
-            connection.stop();
+            messageProducer.close();
+            producerSession.close();
             connection.close();
             pooledConnectionFactory.stop();
         } catch (JMSException e) {
@@ -56,28 +69,19 @@ public class Producer implements Runnable {
         }
     }
 
-    private Connection connectToActiveMQ() {
-        try {
-            Connection connection = pooledConnectionFactory.createConnection();
-            connection.start();
-            return connection;
-        } catch (JMSException e) {
-            LOGGER.error("Unable to connect to ActiveMQ", e);
-            System.exit(0);
-        }
-        return null;
-    }
-
-
     private Person getPerson(Supplier<Stream<Person>> supplier) {
         Optional<Person> optionalPerson = supplier.get().findAny();
         return optionalPerson.orElse(null);
-
     }
 
-    private void sendMessage(String message, Connection connection) {
+    private void sendMessage(String message) {
         try {
-            broker.sendMessage(nameQueue, message, connection);
+            final TextMessage producerMessage = producerSession
+                    .createTextMessage(message);
+
+            // Send the message.
+            messageProducer.send(producerMessage);
+            LOGGER.info("Message send: {}", message);
         } catch (JMSException e) {
             LOGGER.error("Unable to send message: {}", message, e);
         }

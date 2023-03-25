@@ -29,8 +29,6 @@ X
 (src/main/java/my/group/MyProperties.java,4\e\4e05c0ef68185b7ee2fe22443215bf74306e3207
 R
 "src/main/java/my/group/Person.java,9\7\97950fa6cdeeb701c4e36dc9a8b12b53ab159504
-Y
-)src/main/java/my/group/PersonFactory.java,b\4\b477a10d57266a34627a19c74a51d49cb9334c37
 O
 src/main/java/my/group/RPS.java,3\d\3d707d391a77e4cf9312fcbf6a4863d91b81ac1f
 7

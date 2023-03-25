@@ -1,34 +1,32 @@
 package my.group;
 
 import com.opencsv.CSVWriter;
-import org.apache.activemq.ActiveMQConnection;
 import org.slf4j.Logger;
 
 import javax.jms.*;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.concurrent.Callable;
 
-public class Consumer implements Runnable {
+public class Consumer implements Callable<RPS> {
     private static final Logger LOGGER = new MyLogger().getLogger();
-    private final String nameQueue;
+
     private final String poisonPill;
     private final MyValidator validator = new MyValidator();
     private final String invalidPersonsCsv;
     private final String validPersonsCsv;
     private final JsonConverter converter = new JsonConverter();
-    private final Broker broker = new Broker();
     private final RPS rps = new RPS();
     private final Connection connection;
     private final Session session;
     private final MessageConsumer messageConsumer;
 
     public Consumer(String nameQueue, DataToConnectActiveMQ data, String poisonPill, String pathValidPersonsCsv, String pathInvalidPersonsCsv) throws JMSException {
-        this.nameQueue = nameQueue;
         this.poisonPill = poisonPill;
         this.validPersonsCsv = pathValidPersonsCsv;
         this.invalidPersonsCsv = pathInvalidPersonsCsv;
-        this.connection = broker.createActiveMQConnectionFactory(data).createConnection();
+        this.connection = new Broker().createActiveMQConnectionFactory(data).createConnection();
         connection.start();
         this.session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
         Queue queue = session
@@ -40,7 +38,7 @@ public class Consumer implements Runnable {
 
 
     @Override
-    public void run() {
+    public RPS call() {
         rps.startWatch();
         validator.validateCsvFormat(invalidPersonsCsv);
         validator.validateCsvFormat(validPersonsCsv);
@@ -50,7 +48,6 @@ public class Consumer implements Runnable {
 
             while (true) {
                 String message = receiveMessage();
-                if(message==null){continue;}
                 if (message.equals(poisonPill)) {
                     break;
                 }
@@ -73,9 +70,7 @@ public class Consumer implements Runnable {
             closeActiveMQ();
             rps.stopWatch();
         }
-
-        LOGGER.info("Consumer indicators: count= {} time={} rps={}", (rps.getCount()), rps.getTimeSecond(), rps.getRPS());
-
+        return rps;
     }
 
     private void closeActiveMQ() {
@@ -91,14 +86,11 @@ public class Consumer implements Runnable {
     }
 
 
-
     String
     receiveMessage() throws JMSException {
-
         try {
             // Begin to wait for messages.
             Message consumerMessage = messageConsumer.receive();
-            LOGGER.info("Message received: {}", consumerMessage);
             String text = ((TextMessage) consumerMessage).getText();
             LOGGER.info("Message received: {}", text);
             return text;
