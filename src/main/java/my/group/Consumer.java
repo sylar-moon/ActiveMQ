@@ -1,10 +1,10 @@
 package my.group;
 
 import com.opencsv.CSVWriter;
+import org.apache.activemq.ActiveMQConnection;
 import org.slf4j.Logger;
 
-import javax.jms.Connection;
-import javax.jms.JMSException;
+import javax.jms.*;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Arrays;
@@ -12,7 +12,6 @@ import java.util.Arrays;
 public class Consumer implements Runnable {
     private static final Logger LOGGER = new MyLogger().getLogger();
     private final String nameQueue;
-    private final DataToConnectActiveMQ data;
     private final String poisonPill;
     private final MyValidator validator = new MyValidator();
     private final String invalidPersonsCsv;
@@ -20,27 +19,38 @@ public class Consumer implements Runnable {
     private final JsonConverter converter = new JsonConverter();
     private final Broker broker = new Broker();
     private final RPS rps = new RPS();
+    private final Connection connection;
+    private final Session session;
+    private final MessageConsumer messageConsumer;
 
-
-    public Consumer(String nameQueue, DataToConnectActiveMQ data, String poisonPill, String pathValidPersonsCsv, String pathInvalidPersonsCsv) {
+    public Consumer(String nameQueue, DataToConnectActiveMQ data, String poisonPill, String pathValidPersonsCsv, String pathInvalidPersonsCsv) throws JMSException {
         this.nameQueue = nameQueue;
-        this.data = data;
         this.poisonPill = poisonPill;
         this.validPersonsCsv = pathValidPersonsCsv;
         this.invalidPersonsCsv = pathInvalidPersonsCsv;
+        this.connection = broker.createActiveMQConnectionFactory(data).createConnection();
+        connection.start();
+        this.session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
+        Queue queue = session
+                .createQueue(nameQueue);
+        this.messageConsumer = session
+                .createConsumer(queue);
+
     }
+
 
     @Override
     public void run() {
-        Connection connection = connectToActiveMQ(data);
         rps.startWatch();
         validator.validateCsvFormat(invalidPersonsCsv);
         validator.validateCsvFormat(validPersonsCsv);
         try (CSVWriter invalidWriter = new CSVWriter(new FileWriter(invalidPersonsCsv));
-             CSVWriter validWriter = new CSVWriter(new FileWriter(validPersonsCsv))) {
+             CSVWriter validWriter = new CSVWriter(new FileWriter(validPersonsCsv))
+        ) {
 
             while (true) {
-                String message = broker.receiveMessage(nameQueue, connection);
+                String message = receiveMessage();
+                if(message==null){continue;}
                 if (message.equals(poisonPill)) {
                     break;
                 }
@@ -58,34 +68,47 @@ public class Consumer implements Runnable {
         } catch (IOException e) {
             LOGGER.error("Invalid csv file", e);
         } catch (JMSException e) {
-            LOGGER.error("Unable to receive message", e);
+            e.printStackTrace();
+        } finally {
+            closeActiveMQ();
+            rps.stopWatch();
         }
-        rps.stopWatch();
-        stopConnectActiveMQ(connection);
+
         LOGGER.info("Consumer indicators: count= {} time={} rps={}", (rps.getCount()), rps.getTimeSecond(), rps.getRPS());
 
     }
 
-
-    private Connection connectToActiveMQ(DataToConnectActiveMQ data) {
+    private void closeActiveMQ() {
         try {
-            Connection connection = broker.createActiveMQConnectionFactory(data).createConnection();
-            connection.start();
-            return connection;
+            messageConsumer.close();
+            session.close();
+            connection.stop();
+            connection.close();
         } catch (JMSException e) {
-            LOGGER.error("Unable to connect to ActiveMQ", e);
-            System.exit(0);
+            LOGGER.error("Unable close activeMQ consumer connection", e);
+        }
+
+    }
+
+
+
+    String
+    receiveMessage() throws JMSException {
+
+        try {
+            // Begin to wait for messages.
+            Message consumerMessage = messageConsumer.receive();
+            LOGGER.info("Message received: {}", consumerMessage);
+            String text = ((TextMessage) consumerMessage).getText();
+            LOGGER.info("Message received: {}", text);
+            return text;
+
+        } catch (NullPointerException e) {
+            LOGGER.error("Queue is empty", e);
+            System.exit(4);
         }
         return null;
     }
 
 
-    private void stopConnectActiveMQ(Connection connection) {
-        try {
-            connection.stop();
-            connection.close();
-        } catch (JMSException e) {
-            LOGGER.error("Unable to stop connection to ActiveMQ", e);
-        }
-    }
 }

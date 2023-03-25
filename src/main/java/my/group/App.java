@@ -2,6 +2,7 @@ package my.group;
 
 import org.slf4j.Logger;
 
+import javax.jms.JMSException;
 import java.io.IOException;
 
 /**
@@ -36,8 +37,13 @@ public class App {
         int numberObjects = Integer.parseInt(PROPERTIES.getProperty("numberObjects"));
         Thread producer = new Thread(new Producer(messageSendingTime, nameQueue, dataToConnect, numberObjects,POISON_PILL));
         producer.start();
-        Thread consumer = new Thread(new Consumer(nameQueue, dataToConnect,POISON_PILL,PATH_VALID_PERSONS_CSV,PATH_INVALID_PERSONS_CSV));
-        consumer.start();
+
+        try {
+            Thread consumer = new Thread(new Consumer(nameQueue, dataToConnect,POISON_PILL,PATH_VALID_PERSONS_CSV,PATH_INVALID_PERSONS_CSV));
+            consumer.start();
+        } catch (JMSException e) {
+            LOGGER.error("Unable to connect to activeMQ consumer", e);
+        }
     }
 
     private static void readPropertyFile() {
