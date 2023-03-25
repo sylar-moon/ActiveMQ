@@ -14,7 +14,6 @@ public class Producer implements Callable<RPS> {
     private static final Logger LOGGER = new MyLogger().getLogger();
     private final long time;
     private final int numberObjects;
-    private final String nameQueue;
     private final String poisonPill;
     JsonConverter converter = new JsonConverter();
     Broker broker = new Broker();
@@ -26,7 +25,6 @@ public class Producer implements Callable<RPS> {
 
     public Producer(long time, String nameQueue, DataToConnectActiveMQ data, int numberObjects, String poisonPill) throws JMSException {
         this.time = time;
-        this.nameQueue = nameQueue;
         this.numberObjects = numberObjects;
         this.poisonPill = poisonPill;
         ActiveMQConnectionFactory activeMQConnectionFactory = broker.createActiveMQConnectionFactory(data);
